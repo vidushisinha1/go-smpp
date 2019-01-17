@@ -1,4 +1,4 @@
-# SMPP 3.4
+# SMPP 3.4.1
 
 [![GoDoc](https://godoc.org/github.com/fiorix/go-smpp?status.svg)](https://godoc.org/github.com/fiorix/go-smpp) [![Go Report Card](https://goreportcard.com/badge/github.com/fiorix/go-smpp)](https://goreportcard.com/report/github.com/fiorix/go-smpp) [![Build Status](https://secure.travis-ci.org/fiorix/go-smpp.png)](https://travis-ci.org/fiorix/go-smpp)
 
