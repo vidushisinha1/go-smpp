@@ -31,6 +31,7 @@ const MaxDestinationAddress = 254
 
 // Transmitter implements an SMPP client transmitter.
 type Transmitter struct {
+	Name               string
 	Addr               string        // Server address in form of host:port.
 	User               string        // Username.
 	Passwd             string        // Password.
@@ -126,7 +127,7 @@ func (t *Transmitter) handlePDU(f HandlerFunc) {
 		if rc != nil {
 			rc <- &tx{PDU: p}
 		} else if f != nil {
-			f(p)
+			f(t.Name, p)
 		}
 		if p.Header().ID == pdu.DeliverSMID { // Send DeliverSMResp
 			pResp := pdu.NewDeliverSMRespSeq(p.Header().Seq)
@@ -182,7 +183,7 @@ type ShortMessage struct {
 	Register pdufield.DeliverySetting
 
 	// Other fields, normally optional.
-	TLVFields			 pdutlv.Fields
+	TLVFields            pdutlv.Fields
 	ServiceType          string
 	SourceAddrTON        uint8
 	SourceAddrNPI        uint8

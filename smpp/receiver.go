@@ -17,6 +17,7 @@ import (
 
 // Receiver implements an SMPP client receiver.
 type Receiver struct {
+	Name                 string
 	Addr                 string
 	User                 string
 	Passwd               string
@@ -47,7 +48,7 @@ type Receiver struct {
 
 // HandlerFunc is the handler function that a Receiver calls
 // when a new PDU arrives.
-type HandlerFunc func(p pdu.Body)
+type HandlerFunc func(receiverName string, p pdu.Body)
 
 // MergeHolder is a struct which holds the slice of MessageParts for the merging of a long incoming message.
 type MergeHolder struct {
@@ -158,7 +159,7 @@ func (r *Receiver) handlePDU() {
 loop:
 	for {
 		p, err := r.cl.Read()
-		if err != nil {
+		if err != nil || p == nil {
 			break
 		}
 
@@ -168,7 +169,7 @@ loop:
 		}
 
 		if r.MergeInterval == 0 { // Handle the PDU if merging is not needed
-			r.Handler(p)
+			r.Handler(r.Name, p)
 			continue
 		}
 
@@ -180,7 +181,7 @@ loop:
 
 		udhList, ok = p.Fields()[pdufield.GSMUserData].(*pdufield.UDHList)
 		if !ok { // Check if GSMUserData is present inside the PDU, do not try to merge if it's not
-			r.Handler(p)
+			r.Handler(r.Name, p)
 			continue
 		}
 
@@ -235,7 +236,7 @@ loop:
 				p.Fields().Set(pdufield.ShortMessage, buf.Bytes())
 
 				// Handle
-				r.Handler(p)
+				r.Handler(r.Name, p)
 			}
 		}
 	}
