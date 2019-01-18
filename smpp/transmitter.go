@@ -31,7 +31,6 @@ const MaxDestinationAddress = 254
 
 // Transmitter implements an SMPP client transmitter.
 type Transmitter struct {
-	Name               string
 	Addr               string        // Server address in form of host:port.
 	User               string        // Username.
 	Passwd             string        // Password.
@@ -45,6 +44,8 @@ type Transmitter struct {
 	WindowSize         uint
 	rMutex             sync.Mutex
 	r                  *rand.Rand
+
+	HandlerData interface{}
 
 	cl struct {
 		sync.Mutex
@@ -127,7 +128,7 @@ func (t *Transmitter) handlePDU(f HandlerFunc) {
 		if rc != nil {
 			rc <- &tx{PDU: p}
 		} else if f != nil {
-			f(t.Name, p)
+			f(t.HandlerData, p)
 		}
 		if p.Header().ID == pdu.DeliverSMID { // Send DeliverSMResp
 			pResp := pdu.NewDeliverSMRespSeq(p.Header().Seq)
