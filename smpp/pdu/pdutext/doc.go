@@ -14,5 +14,5 @@
 //
 // UCS2 is UTF-16-BE. Here be dragons.
 //
-// TODO(exotel): Fix this.
+// TODO(fiorix): Fix this.
 package pdutext
