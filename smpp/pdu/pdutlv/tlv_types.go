@@ -74,6 +74,8 @@ const (
 	TagAlertOnMessageDelivery   Tag = 0x130C
 	TagItsReplyType             Tag = 0x1380
 	TagItsSessionInfo           Tag = 0x1383
+	TagDltEntityId              Tag = 0x1400
+	TagDltTemplateId            Tag = 0x1401
 )
 
 // Field is a PDU Tag-Length-Value (TLV) field
