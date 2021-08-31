@@ -412,7 +412,12 @@ func (t *Transmitter) submitMsg(sm *ShortMessage, p pdu.Body, dataCoding uint8) 
 	f := p.Fields()
 	f.Set(pdufield.SourceAddr, sm.Src)
 	f.Set(pdufield.DestinationAddr, sm.Dst)
-	f.Set(pdufield.ShortMessage, sm.Text)
+	tlv := p.TLVFields()
+	//According to SMPP protocol both `message_payload` and `short_message` fields should not be set
+	//at the same time. Hence setting `short_message` only when the `message_payload` is not set.
+	if tlv[pdutlv.TagMessagePayload] == nil {
+		f.Set(pdufield.ShortMessage, sm.Text)
+	}
 	f.Set(pdufield.RegisteredDelivery, uint8(sm.Register))
 	// Check if the message has validity set.
 	if sm.Validity != time.Duration(0) {
