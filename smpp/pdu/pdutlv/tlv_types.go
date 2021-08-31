@@ -76,6 +76,7 @@ const (
 	TagItsSessionInfo           Tag = 0x1383
 	TagDltEntityId              Tag = 0x1400
 	TagDltTemplateId            Tag = 0x1401
+	TagTmId                     Tag = 0x1402
 )
 
 // Field is a PDU Tag-Length-Value (TLV) field
