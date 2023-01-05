@@ -398,6 +398,7 @@ func (t *Transmitter) SubmitLongMsg(sm *ShortMessage) ([]ShortMessage, error) {
 			return parts, fmt.Errorf("unexpected PDU ID: %s", id)
 		}
 		if s := resp.PDU.Header().Status; s != 0 {
+			parts = append(parts, *sm)
 			return parts, s
 		}
 		if resp.Err != nil {
