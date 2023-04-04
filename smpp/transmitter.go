@@ -31,19 +31,20 @@ const MaxDestinationAddress = 254
 
 // Transmitter implements an SMPP client transmitter.
 type Transmitter struct {
-	Addr               string        // Server address in form of host:port.
-	User               string        // Username.
-	Passwd             string        // Password.
-	SystemType         string        // System type, default empty.
-	EnquireLink        time.Duration // Enquire link interval, default 10s.
-	EnquireLinkTimeout time.Duration // Time after last EnquireLink response when connection considered down
-	RespTimeout        time.Duration // Response timeout, default 1s.
-	BindInterval       time.Duration // Binding retry interval
-	TLS                *tls.Config   // TLS client settings, optional.
-	RateLimiter        RateLimiter   // Rate limiter, optional.
-	WindowSize         uint
-	rMutex             sync.Mutex
-	r                  *rand.Rand
+	Addr                      string        // Server address in form of host:port.
+	User                      string        // Username.
+	Passwd                    string        // Password.
+	SystemType                string        // System type, default empty.
+	EnquireLink               time.Duration // Enquire link interval, default 10s.
+	EnquireLinkTimeout        time.Duration // Time after last EnquireLink response when connection considered down
+	RespTimeout               time.Duration // Response timeout, default 1s.
+	BindInterval              time.Duration // Binding retry interval
+	TLS                       *tls.Config   // TLS client settings, optional.
+	RateLimiter               RateLimiter   // Rate limiter, optional.
+	WindowSize                uint
+	rMutex                    sync.Mutex
+	r                         *rand.Rand
+	EightBitUDHRefInsteadOf16 bool
 
 	HandlerData interface{}
 
@@ -350,15 +351,29 @@ func (t *Transmitter) SubmitLongMsg(sm *ShortMessage) ([]ShortMessage, error) {
 	t.rMutex.Lock()
 	rn := uint16(t.r.Intn(0xFFFF))
 	t.rMutex.Unlock()
-	UDHHeader := make([]byte, 7)
-	UDHHeader[0] = 0x06              // length of user data header
-	UDHHeader[1] = 0x08              // information element identifier, CSMS 16 bit reference number
-	UDHHeader[2] = 0x04              // length of remaining header
-	UDHHeader[3] = uint8(rn >> 8)    // most significant byte of the reference number
-	UDHHeader[4] = uint8(rn)         // least significant byte of the reference number
-	UDHHeader[5] = uint8(countParts) // total number of message parts
+	var UDHHeader []byte
+	if t.EightBitUDHRefInsteadOf16 {
+		UDHHeader = make([]byte, 6)
+		UDHHeader[0] = 0x05              // length of user data header
+		UDHHeader[1] = 0x00              // information element identifier, CSMS 8 bit reference number
+		UDHHeader[2] = 0x03              // length of remaining header
+		UDHHeader[3] = uint8(rn)         // least significant byte of the reference number
+		UDHHeader[4] = uint8(countParts) // total number of message parts
+	} else {
+		UDHHeader = make([]byte, 7)
+		UDHHeader[0] = 0x06              // length of user data header
+		UDHHeader[1] = 0x08              // information element identifier, CSMS 16 bit reference number
+		UDHHeader[2] = 0x04              // length of remaining header
+		UDHHeader[3] = uint8(rn >> 8)    // most significant byte of the reference number
+		UDHHeader[4] = uint8(rn)         // least significant byte of the reference number
+		UDHHeader[5] = uint8(countParts) // total number of message parts
+	}
 	for i := 0; i < countParts; i++ {
-		UDHHeader[6] = uint8(i + 1) // current message part
+		if t.EightBitUDHRefInsteadOf16 {
+			UDHHeader[5] = uint8(i + 1) // current message part
+		} else {
+			UDHHeader[6] = uint8(i + 1) // current message part
+		}
 		p := pdu.NewSubmitSM(sm.TLVFields)
 		f := p.Fields()
 		f.Set(pdufield.SourceAddr, sm.Src)
